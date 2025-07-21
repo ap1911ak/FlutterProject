@@ -1,0 +1,197 @@
+// main.dart (combined from app1203/lib/main.dart, page2.dart, page3.dart)
+
+import 'package:flutter/material.dart';
+import 'dart:math'; // Required for Random class
+
+void main() => runApp(const App1203());
+
+class App1203 extends StatelessWidget {
+  const App1203({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Navigation with Return Data', // Added a title for the app
+      theme: ThemeData(primarySwatch: Colors.blue), // Added a basic theme
+      home:  HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+   HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Navigation')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+          children: [
+            const SizedBox(height: 30),
+            const Text(
+              'Home Page',
+              textScaler: TextScaler.linear(2.0),
+            ),
+            const SizedBox(height: 60),
+            btnPage2(context),
+            btnPage3(context),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Widget btnPage2(BuildContext ctx) => TextButton(
+      child: const Text(
+        'Go to Page 2 >>',
+        textScaler: TextScaler.linear(1.5),
+      ),
+      onPressed: () {
+        Navigator.push(
+          ctx,
+          MaterialPageRoute(builder: (ctx) => const Page2(id: 999)),
+        ).then((value) {
+          alert(ctx, 'ข้อมูลที่ส่งกลับมา: $value');
+        });
+      },
+    );
+
+Widget btnPage3(BuildContext ctx) => TextButton(
+      child: const Text(
+        'Go to Page 3 >>',
+        textScaler: TextScaler.linear(1.5),
+      ),
+      onPressed: () {
+        Navigator.push(
+          ctx,
+          MaterialPageRoute(
+            builder: (ctx) => const Page3(a: 555, b: 'hahaha'),
+          ),
+        ).then((values) {
+          // Handle potential null value if Page3 is popped without returning data
+          var v = values ?? [0, 'zero'];
+          var v0 = v[0];
+          var v1 = v[1];
+          alert(ctx, 'ข้อมูลที่ส่งกลับมา\n$v0, $v1');
+        });
+      },
+    );
+
+// Helper function for showing an alert dialog
+void alert(BuildContext ctx, String msg) => showDialog(
+      context: ctx,
+      builder: (ctx) => AlertDialog(
+        content: Text(msg, textScaler: TextScaler.linear(1.3)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(), // action to close dialog
+            child: const Text('OK', textScaler: TextScaler.linear(1.3)),
+          ),
+        ],
+      ),
+    );
+
+// Page2 class (merged from app1203/lib/page2.dart)
+class Page2 extends StatefulWidget {
+  final int id;
+  const Page2({super.key, required this.id});
+
+  @override
+  State<Page2> createState() => _Page2State();
+}
+
+class _Page2State extends State<Page2> {
+  // Moved Random here to be consistent with StatefulWidget lifecycle,
+  // or could be initialized in onPressed directly.
+  final Random rnd = Random();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page2')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+          children: [
+            const SizedBox(height: 30),
+            Text(
+              'Page 2\nn\\narg = ${widget.id}', // Use widget.id for StatelessWidget property
+              textScaler: TextScaler.linear(2.0),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 60),
+            btnBack(context),
+            btnPage3_from_Page2(context), // Renamed to avoid naming conflict
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget btnBack(BuildContext ctx) => TextButton(
+        child: const Text(
+          '<< Back',
+          textScaler: TextScaler.linear(1.3),
+        ),
+        onPressed: () => Navigator.pop(ctx, rnd.nextInt(1000)), // ส่งข้อมูลที่ส่งกลับ
+      );
+
+  Widget btnPage3_from_Page2(BuildContext ctx) => TextButton(
+        child: const Text(
+          'Go to Page 3 >>',
+          textScaler: TextScaler.linear(1.3),
+        ),
+        onPressed: () => Navigator.push(
+          ctx,
+          MaterialPageRoute(
+            builder: (ctx) => const Page3(a: 13, b: 'lucky number'),
+          ),
+        ),
+      );
+}
+
+// Page3 class (merged from app1203/lib/page3.dart)
+class Page3 extends StatelessWidget {
+  final int a;
+  final String b;
+
+  const Page3({
+    super.key,
+    required this.a,
+    required this.b,
+  }); // constructor
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page3')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+          children: [
+            const SizedBox(height: 30),
+            Text(
+              'Page 3\n\\na = $a, b = $b',
+              textScaler: TextScaler.linear(2.0),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 60),
+            btnBack(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget btnBack(BuildContext ctx) => TextButton(
+        child: const Text(
+          '<< Back',
+          textScaler: TextScaler.linear(1.3),
+        ),
+        // This button returns a List to the previous route (HomePage or Page2)
+        onPressed: () => Navigator.pop(ctx, [123, 'one-two-three']), // ส่งข้อมูลที่ส่งกลับ
+      );
+}
