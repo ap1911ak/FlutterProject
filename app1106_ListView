@@ -1,0 +1,89 @@
+import 'package:flutter/material.dart';
+import 'dart:math'; // สำหรับ Random
+
+void main() => runApp(const App1106()); // เพิ่ม const
+
+class App1106 extends StatelessWidget {
+  const App1106({super.key}); // เพิ่ม super.key
+
+  @override
+  Widget build(BuildContext context) {
+    return  MaterialApp( // เพิ่ม const
+      home: HomePage(), // เพิ่ม const
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  // สร้าง Random instance ครั้งเดียว
+  final Random _rnd = Random();
+
+  final List<IconData> _leadingIcons = const [ // เพิ่ม const และเปลี่ยนชื่อให้เป็น private
+    Icons.star,
+    Icons.favorite,
+    Icons.wifi,
+    Icons.phone,
+    Icons.settings,
+  ];
+
+  final List<String> _titleText = const [ // เพิ่ม const และเปลี่ยนชื่อให้เป็น private
+    'Star', 'Heart', 'Wi-Fi', 'Phone', 'Gear',
+  ];
+
+  // ไม่ควรประกาศ disabledIndex เป็นตัวแปรระดับ class ใน StatelessWidget
+  // เพราะมันจะคงที่ ถ้าต้องการให้เปลี่ยน ต้องใช้ StatefulWidget
+
+  HomePage({super.key}); // เพิ่ม super.key
+
+  @override
+  Widget build(BuildContext context) {
+    // สามารถประกาศ disabledIndex ตรงนี้ หรือส่งผ่านไปใน buildListTiles()
+    final int disabledIndex = 2; // ตัวอย่าง: กำหนดให้ item ที่ 2 (index 2) ถูก disable
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('ListView')), // เพิ่ม const
+      body: ListView(
+        scrollDirection: Axis.vertical,
+        padding: const EdgeInsets.all(20), // เพิ่ม const
+        children: _buildListTiles(disabledIndex), // ส่ง disabledIndex เข้าไป
+      ),
+    );
+  }
+
+  // ทำให้เป็น private method โดยใส่ underscore หน้าชื่อ
+  List<Widget> _buildListTiles(int disabledIndex) {
+    final List<Widget> list = []; // ไม่ต้องใช้ var เพราะ Flutter 3.x สนับสนุน type inference
+
+    for (int i = 0; i < _titleText.length; i++) {
+      list.add(
+        ListTile(
+          leading: Icon(_leadingIcons[i], size: 36), // ไม่ต้อง const ถ้า IconData มาจาก List ที่เปลี่ยนได้
+          title: Text(
+            _titleText[i],
+            textScaler: const TextScaler.linear(1.5), // ใช้ TextScaler.linear แทน textScaleFactor
+          ),
+          subtitle: Text(
+            '\$\$${10 + _rnd.nextInt(50)}',
+            textScaler: const TextScaler.linear(1.2), // ใช้ TextScaler.linear แทน textScaleFactor
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios), // เพิ่ม const
+          tileColor: Colors.black12,
+          // iconColor: Colors.deepPurple, // คุณสมบัตินี้อยู่บน leading/trailing icons
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), // เพิ่ม const
+          shape: RoundedRectangleBorder(
+            side: const BorderSide( // เพิ่ม const
+              width: 1,
+              color: Colors.blueGrey,
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          enabled: (i != disabledIndex), // ใช้ i เปรียบเทียบกับ disabledIndex
+          // onLongPress: () { print('Long pressed item $i'); }, // เพิ่ม onTap หรือ onLongPress หากต้องการให้ enabled ทำงาน
+        ),
+      );
+      // เพิ่ม SizedBox ระหว่างแต่ละ ListTile เพื่อเว้นช่องว่าง
+      list.add(const SizedBox(height: 10)); // เพิ่ม const
+    }
+    return list;
+  }
+}
