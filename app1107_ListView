@@ -1,0 +1,106 @@
+import 'package:flutter/material.dart';
+import 'dart:math'; // For Random
+
+void main() => runApp(const App1107()); // Added const
+
+class App1107 extends StatelessWidget {
+  const App1107({super.key}); // Added super.key
+
+  @override
+  Widget build(BuildContext context) {
+    return  MaterialApp( // Added const
+      home: HomePage(), // Added const
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  // Create Random instance once
+  final Random _rnd = Random();
+
+  final List<String> _items = const [ // Made private and const
+    'Apple', 'Flutter', 'Dart', 'Google',
+    'Android', 'iOS', 'สวัสดี', 'ไทยแลนด์',
+  ];
+
+  HomePage({super.key}); // Added super.key
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('ListView')), // Added const
+      body: ListView.separated(
+        padding: const EdgeInsets.all(10), // Added const
+        itemCount: _items.length,
+        itemBuilder: (context, index) {
+          // You can switch between circleText and roundedRectText here
+          // Currently using circleText as per the commented code in the image.
+          // If you want roundedRectText, uncomment the line below and comment out circleText
+          return _buildListTile(context, index, useCircleLeading: true);
+          // return _buildListTile(context, index, useCircleLeading: false);
+        },
+        separatorBuilder: (context, i) => const Divider( // Added const
+          thickness: 1,
+          color: Colors.blueGrey,
+          indent: 10,
+          endIndent: 10,
+        ),
+      ),
+    );
+  }
+
+  // Made private by adding underscore
+  Widget _buildListTile(BuildContext context, int index, {required bool useCircleLeading}) {
+    // Get the first character for the leading icon text
+    final String firstChar = _items[index][0];
+
+    return ListTile(
+      // Choose leading widget based on the flag
+      leading: useCircleLeading
+          ? _circleText(firstChar)
+          : _roundedRectText(firstChar),
+      title: Text(
+        _items[index],
+        textScaler: const TextScaler.linear(1.3), // Used TextScaler.linear
+      ),
+      subtitle: Text(
+        '\$\$${10 + _rnd.nextInt(20)}',
+        textScaler: const TextScaler.linear(1.2), // Used TextScaler.linear
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios), // Added const
+    );
+  }
+
+  // Made private by adding underscore
+  Widget _circleText(String char) {
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: Colors.deepPurple,
+      foregroundColor: Colors.white,
+      child: _buildText(char), // Used private helper
+    );
+  }
+
+  // Made private by adding underscore
+  Widget _roundedRectText(String char) {
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.deepPurple,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: _buildText(char), // Used private helper
+    );
+  }
+
+  // Made private by adding underscore
+  Widget _buildText(String char) {
+    return Text(
+      char,
+      textScaler: const TextScaler.linear(1.5), // Used TextScaler.linear
+      style: const TextStyle(color: Colors.white), // Added const
+    );
+  }
+}
