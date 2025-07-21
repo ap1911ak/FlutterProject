@@ -1,0 +1,159 @@
+// main.dart (combined from app1301/lib/main.dart and member.dart)
+
+import 'package:flutter/material.dart';
+
+void main() => runApp(const App1301());
+
+class App1301 extends StatelessWidget {
+  const App1301({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'State Management Demo', // Added a title for the app
+      theme: ThemeData(primarySwatch: Colors.deepPurple), // Added a basic theme
+      home: HomePage(), // HomePage is StatefulWidget, so no const
+    );
+  }
+}
+
+// HomePage (from app1301/lib/main.dart)
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool _status = false;
+  IconData _icon = Icons.lock;
+  String _text = 'กรุณาเข้าสู่ระบบ';
+
+  // Callback function to change the status variable and update the UI
+  // and display login status
+  void updateStatus(bool value) {
+    setState(() {
+      if (!value) {
+        _icon = Icons.lock;
+        _text = 'กรุณาเข้าสู่ระบบ';
+      } else {
+        _icon = Icons.check;
+        _text = 'ท่านเข้าสู่ระบบแล้ว';
+      }
+      _status = value;
+    });
+  }
+
+  // Callback function to read the status variable
+  bool getStatus() {
+    return _status;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Home Page')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+          children: [
+            const SizedBox(height: 30),
+            Icon(
+              _icon,
+              size: 64,
+            ),
+            Text(
+              _text,
+              textScaler: TextScaler.linear(2.0),
+            ),
+            const SizedBox(height: 60),
+            btnMemberPage(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget btnMemberPage(BuildContext context) => TextButton(
+        child: const Text(
+          '>> เพจสมาชิก <<',
+          textScaler: TextScaler.linear(1.5),
+        ),
+        // Navigate to member page and pass callback function
+        // (because it will be called from there)
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MemberPage(
+              updateStatus: updateStatus,
+              getStatus: getStatus,
+            ),
+          ),
+        ),
+      );
+}
+
+// MemberPage (from app1301/lib/member.dart)
+class MemberPage extends StatefulWidget {
+  // Define constructor to receive callback functions
+  final Function(bool) updateStatus;
+  final Function getStatus;
+
+  const MemberPage({
+    super.key,
+    required this.updateStatus,
+    required this.getStatus,
+  });
+
+  @override
+  State<MemberPage> createState() => _MemberPageState();
+}
+
+class _MemberPageState extends State<MemberPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Member Page')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+          children: [
+            const SizedBox(height: 60),
+            btnLogin(context),
+            const SizedBox(height: 30),
+            btnBack(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget btnLogin(BuildContext ctx) => OutlinedButton(
+        // Display button text according to login status
+        child: Text(
+          !widget.getStatus() ? 'เข้าสู่ระบบ' : 'ออกจากระบบ',
+          textScaler: TextScaler.linear(1.5),
+        ),
+        // When clicked, switch login status
+        // from original value to opposite
+        // and assign it through callback function
+        // which will affect the root (HomePage) because
+        // it's a state-changing function
+        onPressed: () {
+          widget.updateStatus(!widget.getStatus());
+          setState(() => widget.getStatus()); // Force rebuild of this page to update button text
+        },
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.grey),
+        ),
+      );
+
+  Widget btnBack(BuildContext ctx) => TextButton(
+        child: const Text(
+          '<< กลับ',
+          textScaler: TextScaler.linear(1.5),
+        ),
+        onPressed: () => Navigator.pop(ctx),
+      );
+}
