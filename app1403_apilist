@@ -1,0 +1,245 @@
+import 'package:flutter/material.dart';
+import 'dart:convert'; // For jsonDecode
+import 'package:http/http.dart' as http; // For API calls
+
+// --- api.dart content combined ---
+Future<List<dynamic>> apiGetPhotos() async {
+  var response = await http.get(Uri.parse(
+      'https://jsonplaceholder.typicode.com/photos'));
+
+  if (response.statusCode == 200) {
+    // If reading many items, when converting jsonDecode()
+    // it will yield List<dynamic>
+    var list = jsonDecode(response.body) as List<dynamic>;
+    // But there are too many items, so limit to first 15 items
+    var listRange = list.getRange(0, 14).toList(); // Changed to 0-14 for 15 items
+    return listRange;
+  } else {
+    throw Exception('Failed to load photos');
+  }
+}
+
+// If reading a single item, use the same principle
+// by receiving the id of the item to be read as a parameter of the function
+Future<Map<String, dynamic>> apiGetPhoto(int id) async {
+  var response = await http.get(Uri.parse(
+      'https://jsonplaceholder.typicode.com/photos/$id'));
+
+  if (response.statusCode == 200) {
+    var map = jsonDecode(response.body) as Map<String, dynamic>;
+    return map;
+  } else {
+    throw Exception('Failed to load photo for ID: $id');
+  }
+}
+// --- End of api.dart content ---
+
+
+// --- detail.dart content combined (adapted for single file) ---
+class DetailPage extends StatefulWidget {
+  final int photoId; // Changed to final as widgets are immutable
+  const DetailPage({Key? key, required this.photoId}) : super(key: key);
+
+  @override
+  State<DetailPage> createState() => _DetailPageState();
+}
+
+class _DetailPageState extends State<DetailPage> {
+  late Future<Map<String, dynamic>> _photoFuture; // Renamed for clarity
+  String _url = '';
+  String _title = '';
+  bool _apiCalling = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPhotoDetail(widget.photoId); // Fetch data when widget initializes
+  }
+
+  void _fetchPhotoDetail(int id) {
+    _photoFuture = apiGetPhoto(id);
+    _photoFuture.then((value) {
+      setState(() {
+        _url = value['url'];
+        _title = value['title'];
+        _apiCalling = false;
+      });
+    }).catchError((error) {
+      setState(() {
+        _url = 'Error loading image';
+        _title = 'Error: $error';
+        _apiCalling = false;
+      });
+      print('Error fetching photo detail: $error');
+    });
+  }
+
+  Widget _buildColumnDetail() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Ensure _url is not empty before trying to load Image.network
+        _url.isNotEmpty && !_url.contains('Error')
+            ? Image.network(
+                _url,
+                loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Text('Could not load image');
+                },
+              )
+            : Container(), // Empty container if URL is not valid
+        const SizedBox(height: 10),
+        Text(
+          _url,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          _title,
+          style: const TextStyle(fontWeight: FontWeight.bold), // Added bold for title
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Photo ${widget.photoId}')),
+      body: Container(
+        padding: const EdgeInsets.all(15),
+        alignment: Alignment.topCenter,
+        child: _apiCalling
+            ? const CircularProgressIndicator()
+            : _buildColumnDetail(),
+      ),
+    );
+  }
+}
+// --- End of detail.dart content ---
+
+
+void main() => runApp(const App1403());
+
+class App1403 extends StatelessWidget {
+  const App1403({Key? key}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Photo Gallery App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late Future<List<dynamic>> _futurePhotos; // Renamed for clarity
+  List<dynamic> _listPhotos = []; // Renamed and initialized
+  bool _apiCalling = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPhotos(); // Call API when the widget is initialized
+  }
+
+  void _fetchPhotos() {
+    _futurePhotos = apiGetPhotos();
+    _futurePhotos.then((value) {
+      setState(() {
+        _listPhotos = value; // Assign the list directly
+        _apiCalling = false;
+      });
+    }).catchError((error) {
+      setState(() {
+        _listPhotos = []; // Clear list on error
+        _apiCalling = false;
+      });
+      print('Error fetching photos: $error');
+    });
+  }
+
+  Widget _buildListView() {
+    return ListView.separated(
+      itemCount: _listPhotos.length,
+      itemBuilder: (ctx, idx) => _buildListTile(idx),
+      separatorBuilder: (ctx, idx) => const Divider(
+        thickness: 1,
+        color: Colors.indigo,
+      ),
+    );
+  }
+
+  Widget _buildListTile(int index) {
+    final photo = _listPhotos[index]; // Get photo data for current item
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15), // Added horizontal padding
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Image.network(
+          photo['thumbnailUrl'],
+          width: 60, // Consistent size
+          height: 60,
+          fit: BoxFit.cover,
+          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(Icons.error); // Show error icon
+          },
+        ),
+      ),
+      title: Text(photo['title']),
+      trailing: const Icon(Icons.arrow_forward_ios),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailPage(photoId: photo['id']),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Photo Gallery')), // Updated title
+      body: Container(
+        padding: const EdgeInsets.all(15), // Consistent padding
+        child: _apiCalling
+            ? const Center(child: CircularProgressIndicator()) // Center the loading indicator
+            : _buildListView(),
+      ),
+    );
+  }
+}
