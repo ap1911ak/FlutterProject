@@ -1,0 +1,324 @@
+// main.dart (combined from app1306/lib/main.dart, shared.dart, home.dart, cart.dart, alert.dart)
+
+import 'package:flutter/material.dart';
+
+// Placeholder for badges.dart functionality - Simplified for single file
+// In a real project, you would add 'badges' to your pubspec.yaml
+// and import 'package:badges/badges.dart';
+class Badge extends StatelessWidget {
+  final Widget child;
+  final Widget badgeContent;
+  final bool showBadge;
+
+  const Badge({
+    super.key,
+    required this.child,
+    required this.badgeContent,
+    this.showBadge = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!showBadge) {
+      return child;
+    }
+    return Stack(
+      clipBehavior: Clip.none, // Allows badge to go outside parent bounds
+      children: [
+        child,
+        Positioned(
+          right: -8, // Adjust position as needed
+          top: -8,   // Adjust position as needed
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.orange, // Simplified badge color
+              borderRadius: BorderRadius.circular(10),
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 16,
+              minHeight: 16,
+            ),
+            child: Center(child: badgeContent),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+
+// shared.dart (merged)
+class Share {
+  // These functions will be assigned in MainPageState
+  // ignore: prefer_function_declarations_into_variables
+  static Function addCart = () {};
+  // ignore: prefer_function_declarations_into_variables
+  static Function removeCart = () {};
+  // ignore: prefer_function_declarations_into_variables
+  static Function addAlert = () {};
+  // ignore: prefer_function_declarations_into_variables
+  static Function removeAlert = () {};
+}
+
+void main() => runApp(const App1306());
+
+class App1306 extends StatelessWidget {
+  const App1306({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Global State Badges Demo', // Added a title
+      theme: ThemeData(primarySwatch: Colors.green), // Added a basic theme
+      home: const MainPage(),
+    );
+  }
+}
+
+class MainPage extends StatefulWidget {
+  const MainPage({super.key});
+
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  int _navBarIndex = 0;
+  int _cartItemsCount = 0;
+  int _alertCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Assign the static functions in Share to update state
+    Share.addCart = () {
+      setState(() => _cartItemsCount++);
+    };
+    Share.removeCart = () {
+      setState(() {
+        if (_cartItemsCount > 0) {
+          _cartItemsCount--;
+        }
+      });
+    };
+    Share.addAlert = () {
+      setState(() => _alertCount++);
+    };
+    Share.removeAlert = () {
+      setState(() {
+        if (_alertCount > 0) {
+          _alertCount--;
+        }
+      });
+    };
+  }
+
+  // List of pages for the bottom navigation bar
+  final List<Widget> pages = [
+    const HomePage(),
+    const CartPage(),
+    const AlertPage(),
+    const MenuPage(), // Placeholder for MenuPage
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: pages[_navBarIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // Fixed type as per image
+        backgroundColor: Colors.deepPurpleAccent,
+        selectedItemColor: Colors.cyanAccent,
+        unselectedItemColor: Colors.white,
+        currentIndex: _navBarIndex,
+        items: bottomNavItems(),
+        onTap: (index) {
+          setState(() {
+            _navBarIndex = index;
+          });
+        },
+      ),
+    );
+  }
+
+  List<BottomNavigationBarItem> bottomNavItems() {
+    var itemIcons = <IconData>[
+      Icons.home,
+      Icons.shopping_cart,
+      Icons.notifications,
+      Icons.menu
+    ];
+    var itemLabels = <String>[
+      'Home',
+      'Cart',
+      'Alert',
+      'Menu'
+    ];
+    var _badges = [0, _cartItemsCount, _alertCount, 0]; // Badge counts for each item
+
+    return List.generate(itemIcons.length, (index) {
+      return BottomNavigationBarItem(
+        icon: buildBadge(_badges[index], itemIcons[index]),
+        label: itemLabels[index],
+      );
+    });
+  }
+
+  // MODIFIED: buildBadge function to show "99+"
+  Widget buildBadge(dynamic count, IconData icn) {
+    bool showBadge = false;
+    String displayText;
+
+    if (count > 0) {
+      showBadge = true;
+      if (count > 99) {
+        displayText = '99+';
+      } else {
+        displayText = '$count';
+      }
+    } else {
+      displayText = ''; // Will not be displayed if showBadge is false
+    }
+
+    return Badge(
+      showBadge: showBadge,
+      badgeContent: Text(
+        displayText,
+        style: const TextStyle(color: Colors.white, fontSize: 10), // Reduced font size for '+'
+      ),
+      child: Icon(
+        icn,
+        color: Colors.white,
+      ),
+    );
+  }
+}
+
+// home.dart (merged)
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Home Page')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 30),
+            const Text(
+              'Welcome Home!',
+              textScaler: TextScaler.linear(2.0),
+            ),
+            const SizedBox(height: 60),
+            // Example buttons to interact with shared state (if needed on home page)
+            // TextButton(
+            //   onPressed: () => Share.addCart(),
+            //   child: const Text('Add Item to Cart'),
+            // ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// cart.dart (merged)
+class CartPage extends StatefulWidget {
+  const CartPage({super.key});
+
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Cart')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 30),
+            btnAddCart(),
+            btnDeleteCart(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget btnAddCart() => TextButton(
+        child: const Text('Add Cart', textScaler: TextScaler.linear(1.5)),
+        onPressed: () => Share.addCart(),
+      );
+
+  Widget btnDeleteCart() => TextButton(
+        child: const Text('Delete Cart', textScaler: TextScaler.linear(1.5)),
+        onPressed: () => Share.removeCart(),
+      );
+}
+
+// alert.dart (merged)
+class AlertPage extends StatefulWidget {
+  const AlertPage({super.key});
+
+  @override
+  State<AlertPage> createState() => _AlertPageState();
+}
+
+class _AlertPageState extends State<AlertPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Alert')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 30),
+            btnAddAlert(),
+            btnDeleteAlert(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget btnAddAlert() => TextButton(
+        child: const Text('Add Alert', textScaler: TextScaler.linear(1.5)),
+        onPressed: () => Share.addAlert(),
+      );
+
+  Widget btnDeleteAlert() => TextButton(
+        child: const Text('Delete Alert', textScaler: TextScaler.linear(1.5)),
+        onPressed: () => Share.removeAlert(),
+      );
+}
+
+// Placeholder for menu.dart (as it was not provided)
+class MenuPage extends StatelessWidget {
+  const MenuPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Menu Page')),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(height: 30),
+            Text(
+              'Menu Page Placeholder',
+              textScaler: TextScaler.linear(2.0),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
